@@ -1,0 +1,226 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>PDF Merger</title>
+    <style>
+        /* Basic page styling */
+        body {
+            font-family: Arial;
+            background: #f4f6f8;
+            text-align: center;
+            margin-top: 50px;
+        }
+
+        /* Main card container */
+        .container {
+            width: 400px;
+            margin: auto;
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+
+        h2 {
+            margin-bottom: 20px;
+        }
+
+        /* Drag & click upload area */
+        .drop-area {
+            border: 2px dashed #888;
+            padding: 30px;
+            cursor: pointer;
+            border-radius: 10px;
+        }
+
+        .drop-area:hover {
+            background: #f0f0f0;
+        }
+
+        /* Hide default file input */
+        input[type="file"] {
+            display: none;
+        }
+
+        /* File list styling */
+        ul {
+            list-style: none;
+            padding: 0;
+            text-align: left;
+            margin-top: 15px;
+        }
+
+        /* Each file item */
+        li {
+            background: #eee;
+            padding: 8px;
+            margin: 5px 0;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;   /* aligns button properly */
+            border-radius: 5px;
+        }
+
+        /* Main buttons */
+        button {
+            margin-top: 15px;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            background: black;
+            color: white;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        /* Small remove (X) button */
+        .remove-btn {
+            background: red;
+            color: white;
+            border: none;
+            cursor: pointer;
+
+            width: 35px;        /* fixed width */
+            height: 30px;       /* fixed height */
+
+            display: flex;
+            align-items: center;
+            justify-content: center;
+
+            border-radius: 5px;
+            flex-shrink: 0;     /* prevents stretching */
+        }
+
+        /* Loading text */
+        #loading {
+            display: none;
+            margin-top: 10px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <h2>📄 PDF Merger</h2>
+
+    <!-- Main form -->
+    <form id="form" method="POST" action="/merge" enctype="multipart/form-data">
+
+        <!-- Clickable drag area -->
+        <div class="drop-area" onclick="fileInput.click()">
+            Click or Drag PDFs here
+        </div>
+
+        <!-- Hidden file input -->
+        <input type="file" id="fileInput" name="pdfs" multiple accept=".pdf">
+
+        <!-- List of selected files -->
+        <ul id="fileList"></ul>
+
+        <!-- Merge button -->
+        <button type="submit">Merge PDFs</button>
+
+        <!-- Loading indicator -->
+        <p id="loading" style="display:none;">Merging... Please wait ⏳</p>
+
+        <!-- Download button (hidden initially) -->
+        <button id="downloadBtn" style="display:none;">
+            Download Merged PDF
+        </button>
+    </form>
+</div>
+
+<script>
+/* Array to store selected files manually */
+let filesArray = [];
+
+/* DOM references */
+const fileInput = document.getElementById("fileInput");
+const fileList = document.getElementById("fileList");
+const form = document.getElementById("form");
+
+/* When user selects files */
+fileInput.addEventListener("change", () => {
+    for (let file of fileInput.files) {
+        filesArray.push(file);  // store files
+    }
+    updateList();   //refresh UI
+});
+
+/* Update file list UI */
+function updateList() {
+    fileList.innerHTML = "";    // clear old list
+    filesArray.forEach((file, index) => {
+        let li = document.createElement("li");
+        li.innerHTML = `
+            ${file.name}
+            <button class="remove-btn" onclick="removeFile(${index})">X</button>
+        `;
+        fileList.appendChild(li);
+    });
+}
+
+/* Remove file from list */
+function removeFile(index) {
+    filesArray.splice(index, 1);
+    updateList();
+}
+
+/* Handle form submission using fetch (AJAX) */
+form.addEventListener("submit", async (e) => {
+    e.preventDefault(); // prevent page reload
+
+    // Validation
+    if (filesArray.length < 2) {
+        alert("Upload at least 2 PDFs");
+        return;
+    }
+
+    // Show loading text
+    document.getElementById("loading").style.display = "block";
+    document.getElementById("downloadBtn").style.display = "none";
+
+    const formData = new FormData();
+
+    // Append files to form data
+    filesArray.forEach(file => {
+        formData.append("pdfs", file);
+    });
+
+    try {
+        // Send request to backend
+        const response = await fetch("/merge", {
+            method: "POST",
+            body: formData
+        });
+
+        // Get merged PDF as blob
+        const blob = await response.blob();
+
+        // Create temporary URL for download
+        const url = window.URL.createObjectURL(blob);
+
+        const downloadBtn = document.getElementById("downloadBtn");
+
+        // Attach download logic
+        downloadBtn.onclick = () => {
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = "merged_pdf.pdf";
+            a.click();
+        };
+
+        // Show download button
+        downloadBtn.style.display = "block";
+
+    } catch (error) {
+        alert("Error merging PDFs");
+    }
+
+    // Hide loading text
+    document.getElementById("loading").style.display = "none";
+});
+</script>
+
+</body>
+</html>
