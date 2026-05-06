@@ -28,11 +28,17 @@ A simple and efficient web application that allows users to upload multiple PDF 
 
 ## 📸 Screenshots
 
-### Upload Interface
-![Upload UI](before uploading pdfs.png)
+### Before Upload Interface
+![Before Uploading UI](screenshots/before_uploading_pdfs.png)
 
-### After Merge
-![Download UI](screenshots/download.png)
+### After Upload Interface
+![After Uploading UI](screenshots/after_uploading_pdfs.png)
+
+### While Merging Interface
+![While Merging UI](screenshots/while_merging.png)
+
+### Download Merged PDFs Interface
+![Merge UI](screenshots/after_merging_pdfs.png)
 
 ---
 
